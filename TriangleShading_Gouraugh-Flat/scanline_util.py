@@ -8,8 +8,10 @@ class TriangleFillingFunction:
 	def __init__(self, return_value):
 		self.return_value = return_value
 
-	def interpolateColor(self, x1, x2, x, C1, C2):
-	    """
+
+
+    def interpolate_color(self,x1,x2,C1,C2):
+		"""
 
 			Function that implements the linear interpolation between 2 3D values C1,C2 and C3
 			based on 2 points in 2d space of the vertices of a triangle
@@ -23,32 +25,25 @@ class TriangleFillingFunction:
 
 	        gamma parameters are the thalli theorem proportions that are used to compute the linear interpol either from 1->x or 2->x with this order
 	    """
-	    if(len(x) == 1):
-	        if x1[0] == x2[0]:
-	            C_append = C1.append(C2)
-	            value = np.mean(C_append)
-	            return value
-	        else:
-	            gamma = abs(x1[0] - x[0]) / abs(x1[0] - x2[0])
-	            value = gamma * C1 + (1 - gamma) * C2
-	    elif(len(x) == 2):
-	        if x1[1] == x2[1]:
-	            C_append = C1.append(C2)
-	            value = np.mean(C_append)
-	            return value
-	        else:
-	            gamma = abs(x2[1] - x[1]) / abs(x2[1] - x1[1])
-	    # There are these complementary coefficients that may be used but abs pretty much make them equal.
-	        gamma_x2 = abs(x2[0] - x[0]) / abs(x2[0] - x1[0])
-	        gamma_y12 = abs(x2[1] - x[1]) / abs(x2[1] - x1[1])
-	        gamma_x1 = abs(x1[0] - x[0]) / abs(x1[0] - x2[0])
+		if(x1[0]==x2[0]):
+			#interpolate according y_coordinate
+			gamma = abs(x2[1]-x[1])/abs(x2[1]-x1[1])
+			color_value = np.array(gamma*C1 + (1-gamma)*C2)
+		elif(x1[1]==x2[1]):
+			#interpolate according to x_coordinate
+			gamma = abs(x2[0]-x[0])/abs(x2[0]-x1[0])
+			color_value = np.array(gamma*C1+(1-gamma)*C2)
+		else:
+			lambda1 = abs(x2[1]-x[1])/abs(x2[1]-x1[1])
+			lambda2 = abs(x2[0]-x[0])/abs(x2[0]-x1[0])
+			interpolation_arr = np.array([lambda1*C1 + (1-lambda1)*C2],[lambda2*C1 + (1-lambda2)*C2])
+			color_value = np.mean(interpolation_arr, axis=0)
+			
+    # 1-gamma_x2 is the percentage of the colour similarity of x that is similar to point x2
+    # This should be done on y axis as well for 2d point
+    # Now the itnerpolation can be done
 
-	        value = abs(gamma_x1 - gamma_x2) * C1 + gamma_y12 * C2
-	    # 1-gamma_x2 is the percentage of the colour similarity of x that is similar to point x2
-	    # This should be done on y axis as well for 2d point
-	    # Now the itnerpolation can be done
 
-	    return value;
 
 	def shade_triangle(self, img, verts2d, vcolors, shade_t):
 			# Triangle shading algorithm
@@ -74,3 +69,9 @@ class TriangleFillingFunction:
 			return Y
 
 	def render(verts2d,faces,vcolors,depth,shade_t):
+		if(shade_t != "flat") || (shade_t != "gouraud"):
+			print("Not valid shading algorithm")
+		if(m < 0 || n < 0):
+			print("Not valid graphic image dimensions")
+		'''Define image that will be rendered '''
+		img = np.ones((m,n,3))
