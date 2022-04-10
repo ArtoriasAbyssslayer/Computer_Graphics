@@ -1,3 +1,4 @@
+from scanline_util import TriangleFillingFunction
 
 from tqdm import tqdm
 for i in tqdm(range(10)):
