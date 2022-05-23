@@ -96,7 +96,7 @@ class TriangleFillingFunction:
 					active_nodes = aux.redetermine_active_nodes_set(active_edges,active_nodes,new_active_nodes,edge_line_alphas)
 					# use colour blending
 					img, active_nodes_color = color_blending(y, edge_vertices, x_bounds, y_bounds, alpha, active_edges,active_nodes, vcolors, img)
-					intersection_counter = 0;
+					intersection_counter = 0
 					for x in range(x_min, x_max):
 						if x == np.around(active_nodes[active_edges][:, 0])!=0 :
 							intersection_counter += 1
@@ -151,7 +151,7 @@ class TriangleFillingFunction:
 					intersection_counter = 0
 					for x in range(x_min,xmax):
 						if x == np.around(active_nodes[active_edges][:,0]):
-							intersection_counter += np.around(active_nodes[active_edges][:,0]);
+							intersection_counter += np.around(active_nodes[active_edges][:,0])
 						elif intersection_counter % 2 and int(np.around(x_left)) != int(np.around(x_right)):
 							img[x,y] = estimated_color
 
@@ -182,14 +182,14 @@ class TriangleFillingFunction:
 		if M < 0 or N < 0:
 			print("Not valid graphic image dimensions")
 		'''Define a white image that will be rendered(filled with color) '''
-		img = np.ones((M,N,3));
+		img = np.ones((M,N,3))
 		triangle_depths = np.array(np.mean(depth[faces], axis = 1))
 		reversed_depths =  list(np.flip(np.argsort(triangle_depths)))
 		# find vcolors for descending depths sorted triangles
 		for st in reversed_depths:
 			v_colors_sorted_triang = faces[st]
 			if shade_t == 'flat':
-				img = self.shade_triangle(img,reversed_depths,v_colors_sorted_triang,'flat');
+				img = self.shade_triangle(img,reversed_depths,v_colors_sorted_triang,'flat')
 			if shade_t == 'gouraud':
-				img = self.shade_triangle(img,reversed_depths,v_colors_sorted_triang,'gouraud');
+				img = self.shade_triangle(img,reversed_depths,v_colors_sorted_triang,'gouraud')
 		return img

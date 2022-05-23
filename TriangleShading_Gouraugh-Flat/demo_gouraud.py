@@ -2,6 +2,7 @@ import numpy as np
 import cv2 as cv
 import scanline_util
 import auxiliary_funcs as aux
+from scanline_util import TriangleFillingFunction 
 import tqdm
 import time
 
@@ -17,7 +18,7 @@ data,verts2d,vcolors,faces,depth = aux.load_binary_data(filename = './GHW_assets
 toc = time.time()
 for i in tqdm.trange(100):
 	print("Scanline algorithm running!:")
-	tff = scanline_util.TriangleFillingFunction()
+	tff = TriangleFillingFunction()
 	img = tff.render(verts2d,faces,vcolors,depth,M,N,"gouraud")
 	tic = time.time()
 
