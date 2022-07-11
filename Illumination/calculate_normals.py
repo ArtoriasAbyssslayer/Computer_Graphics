@@ -1,14 +1,14 @@
 import numpy as np 
-def calculate_normals(vertices,face_indicies):
+def calculate_normals(vertices,face_indices):
 	#allocate space for normal vectors
 	normals = np.zeros(len(vertices))
 
-	points_1 = face_indicies[0,:]
-	points_2 = face_indicies[1,:]
-	points_3 = face_indicies[2,:]
+	points_1 = face_indices[0,:]
+	points_2 = face_indices[1,:]
+	points_3 = face_indices[2,:]
 
 	#Select each triangle vertices
-	A = vertices[:,points_1]
+	A = vertices[:,points_1-1]
 	B = vertices[:,points_2-1]
 	C = vertices[:,points_3-2]
 
@@ -25,11 +25,11 @@ def calculate_normals(vertices,face_indicies):
 
 	# Find normals for every vertex the triangles belong
 	
-	for i in face_indicies: 
+	for i in face_indices: 
 		triangles = vertices[i]
 		# calculate the normal of each face
 		face_N = np.cross(triangles[1]-triangles[0],triangles[2] - triangles[1])
-		face_N = face_N / np.linalg.norm(face_N)
+		face_N = face_N/np.linalg.norm(face_N)
 		# Add the normal vector of the triangles
 		normals[i] += face_N
 

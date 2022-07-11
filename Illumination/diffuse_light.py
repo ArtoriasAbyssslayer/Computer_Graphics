@@ -11,17 +11,17 @@ def diffuse_light(P,N,color,k_d,l_p,l_i):
 #    - l_i = light_intensities of each light source [I_r,I_g,I_b]x3
 
 	# get the unitary vector 
-	N_u = N/np.absolute(c)
+	N_u = N/np.absolute(N)
 
 	# get unitary L vector 
 	# L vector is the vector of the light beam that reflects on the surface of P
-	L = numpy.substract(l_p-P)
-	L_u = L/numpy.absolute(L)
+	L = P - l_p
+	L_u = L/np.absolute(L)
 
 	#Compute the dot product of the unitary vector to find the cosine
 	# of the incident rays
-	cosb = numpy.dot(N_u,L_u)
+	cosb = np.dot(N_u,L_u)
 
-	I = kd*cosa*l_i
+	I = k_d*cosb*l_i
 	return I 
 	

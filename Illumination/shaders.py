@@ -38,9 +38,9 @@ def shade_phong(verts_p , verts_n, verts_c , bcoords, cam_pos, ka , kd, ks , n, 
 	# Initialize and find the vertices of the edges in each triangle
 	# Implement changed scanline algorithm too
 	edges =  np.zeros((2,3,3))
-	edges[:,:,0] = [[verts_p[:,0].transpose,1],[verts_p[:,0].transpose,2]]
-	edges[:,:,1] = [[verts_p[:,1].transpose,1],[verts_p[:,1].transpose,3]]
-	edges[:,:,2] = [[verts_p[:,2].transpose,2],[verts_p[:,2].transpose,3]]
+	edges[:,:,0] = [[verts_p[:,0],1],[verts_p[:,0],2]]
+	edges[:,:,1] = [[verts_p[:,1],1],[verts_p[:,1],3]]
+	edges[:,:,2] = [[verts_p[:,2],2],[verts_p[:,2],3]]
 
 
 	y_kmin = np.zeros((1,3))
