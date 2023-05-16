@@ -176,7 +176,7 @@ def scanlineUtil(vertices: np.ndarray):
                     edge_idx, 1, 0] < x_bounds[
                     edge_idx, 0] and edges_verts[edge_idx, 1, 1] == x_bounds[edge_idx, 1] and edges_verts[
                     edge_idx, 0, 0] == x_bounds[
-                    edge_idx, 0] and dges_verts[edge_idx, 1, 0] == x_bounds[edge_idx, 0] and edges_verts[
+                    edge_idx, 0] and edges_verts[edge_idx, 1, 0] == x_bounds[edge_idx, 0] and edges_verts[
                     edge_idx, 1, 1] == x_bounds[
                     edge_idx, 1] and edges_verts[edge_idx, 1, 0] == edges_verts[edge_idx, 0, 1] and edges_verts[
                     edge_idx, 0, 0] == edges_verts[edge_idx, 1, 1]:
