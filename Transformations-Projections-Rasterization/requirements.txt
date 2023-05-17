@@ -1,0 +1,5 @@
+numpy
+tqdm
+matplotlib.pyplot
+imageio
+opencv-python
