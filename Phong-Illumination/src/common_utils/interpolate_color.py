@@ -22,7 +22,7 @@ def interpolateVector(p1,p2,V1,V2,xy,dim):
         V = (1-c)*V2 + c*V1
         return V
     elif dim == 2:
-        # interpolate using mid point and barycentric coordinates
+        #interpolate using mid point and barycentric coordinates
         pmid = (p1 + p2)/2
         v0 =  p2 - p1
         v1 =  pmid - p1
@@ -45,7 +45,9 @@ def interpolateVector(p1,p2,V1,V2,xy,dim):
             w3 = 1 - w2 - w1
         # interpolate V using barycentric coordinates
         V = w1 * V1 + w2 * V2 + w3 * (V1 + V2) / 2
-
+        "Revised Method"
+        c = (p2-xy)/(p2-p1)
+        V += np.array(c*V1 + (1-c)*V2)
 
     else:
         raise ValueError("dim must be 1 or 2")

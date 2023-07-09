@@ -14,4 +14,4 @@ def affine_transform(cp,RotationMatrix,translateVec):
     homogenous_transform[3,3] = 1
     transformed_points = np.matmul(homogenous_transform,cp_augmented_matrix.T)
     transformed_points = transformed_points.T[:, 0:3].reshape(-1,3)
-    return transformed_points # keep only the first 3 rows, the last row is the homogenous coordinate which is always 1
+    return transformed_points# keep only the first 3 rows, the last row is the homogenous coordinate which is always 1

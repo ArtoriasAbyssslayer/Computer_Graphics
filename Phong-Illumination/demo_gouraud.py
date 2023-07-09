@@ -2,8 +2,6 @@ from src.common_utils.load_vertices import load_IlluminationData_npy as load_dat
 from src.common_utils.render import render_object,renderImageToFile
 from src.common_utils.phongMaterial import PhongMaterial as phongMaterial
 from src.common_utils.pointLight import PointLight as pointLight
-import cv2 as cv
-
 import time 
 import numpy as np 
 
@@ -27,33 +25,32 @@ def main(*args):
         if param == 0:
             tic = time.time()
             Y = render_object(shader,focal,eye,lookat,up,bg_color,M,N,H,W,verts,vcolors,face_indices,mat,lights,light_amb,param)
-            renderImageToFile(Y , 'Phong_Ambient',save=True)
+            renderImageToFile(Y , 'Gouraud_Ambient',save=True)
             toc = time.time()
             min = int((toc - tic)/60)
             print(f"Shading Ambient Only Lighting finished in {min} minutes {(toc - tic)%60:0.0f} seconds")
         elif param == 1:
             tic = time.time()
             Y = render_object(shader,focal,eye,lookat,up,bg_color,M,N,H,W,verts,vcolors,face_indices,mat,lights,light_amb,param)
-            renderImageToFile(Y , 'Phong_Diffuse',save=True)
+            renderImageToFile(Y , 'Gouraud_Diffuse',save=True)
             toc = time.time()
             min = int((toc - tic)/60)
             print(f"Shading Diffuse Only Lighting finished in {min} minutes {(toc - tic)%60:0.0f} seconds")
         elif param == 0:
             tic = time.time()
             Y = render_object(shader,focal,eye,lookat,up,bg_color,M,N,H,W,verts,vcolors,face_indices,mat,lights,light_amb,param)
-            renderImageToFile(Y,'Phong_Specular',save=True)
+            renderImageToFile(Y,'Gouraud_Specular',save=True)
             toc = time.time()
             min = int((toc - tic)/60)
-            print(f"Shading Specular Only  Lighting finished in {min} minutes {(toc - tic)%60:0.0f} seconds")
+            print(f"Shading Specular Only Lighting  finished in {min} minutes {(toc - tic)%60:0.0f} seconds")
         else:
             tic = time.time()
             Y = render_object(shader,focal,eye,lookat,up,bg_color,M,N,H,W,verts,vcolors,face_indices,mat,lights,light_amb,param)
-            renderImageToFile(Y,'Phong_Full',save=True)
+            renderImageToFile(Y,'Gouraud_Full_Phong_Reflection',save=True)
             toc = time.time()
             min = int((toc - tic)/60)
             print(f"Shading Phong Full Lighting finished in {min} minutes {(toc - tic)%60:0.0f} seconds")
     
-    
 if __name__ == "__main__":
-    shader = 1
+    shader = 0
     main(shader)

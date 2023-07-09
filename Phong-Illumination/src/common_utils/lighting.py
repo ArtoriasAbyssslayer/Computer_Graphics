@@ -6,8 +6,8 @@ from src.common_utils.pointLight import PointLight
 class PhongIlluminationModel(PhongMaterial,PointLight):
 
     def __init__(self,ka,kd,ks,n_phong,l_pos,l_int):
-        super().__init__(self,ka,kd,ks,n_phong)
-        super().__init__(self,PhongMaterial,l_pos,l_int)
+        self.PhongMaterial = PhongMaterial(ka,kd,ks,n_phong)
+        self.PointLight = PointLight(self.PhongMaterial,l_pos,l_int)
         
     def ambient_light(self,ka,I_a):
         return ka*I_a
@@ -24,18 +24,18 @@ class PhongIlluminationModel(PhongMaterial,PointLight):
 
         # get the unitary vector
         N_u = N/np.absolute(N)
+        
 
         # get unitary L vector
         # L vector is the vector of the light beam that reflects on the surface of P
-        L = P - l_p
-        L_u = L/np.absolute(L)
+        L = l_p - P
+        L_u = L/np.linalg.norm(L)
 
         # Compute the dot product of the unitary vector to find the cosine
         # of the incident rays
-        cosb = np.dot(N_u, L_u)
-        I = kd*cosb*l_i*color
-        
-        return I
+        cosb = np.dot(L_u,N_u)
+        I = kd*cosb*l_i
+        return color*I
 
     # specular light I = k_d*I_0(R*V)^N
     # I = specular_light(P, N, color, cam_pos, ks , n, light_positions, light_intensities)
@@ -44,7 +44,7 @@ class PhongIlluminationModel(PhongMaterial,PointLight):
         # calculate R vector
         L = P - l_p
         L_u = L/np.absolute(L)
-        R = 2*N_u*np.dot(N_u, L_u)-L_u
+        R = 2*N_u*np.dot(L_u,N_u)-L_u
         V = P - cam_pos
         V_u = V/np.absolute(V)
         # R*V

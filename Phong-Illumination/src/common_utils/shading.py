@@ -12,7 +12,16 @@ from src.common_utils.lighting import PhongIlluminationModel
 
 
 
-def shadeGouraud(verts2d, vcolors, img):
+def shadeGouraud(verts2d,
+                verts_n, 
+                vcolors,
+                bcoords,
+                cam_pos,
+                mat,
+                lights,
+                light_amb,
+                img,
+                LightingParam):
     """Renders the image, using interpolate colors to achieve smooth color transitioning
 
     Parameters
@@ -71,7 +80,16 @@ def shadeGouraud(verts2d, vcolors, img):
     return img
 
 
-def shadeFlat(verts2d, vcolors, img):
+def shadeFlat(verts2d,
+            verts_n, 
+            vcolors,
+            bcoords,
+            cam_pos,
+            mat,
+            lights,
+            light_amb,
+            img,
+            LightingParam):
     """Renders the image, using a single color for each triangle
 
     Parameters
@@ -134,7 +152,8 @@ def shadePhong(verts_p,
                mat,
                lights,
                light_amb,
-               img):
+               img,
+               LightingParam):
     """
         verts_p: Kx2 matrix which contains all the 2D coordinates of the vertices of each vertex(K vertices)
         verts_n: The normal vectors of every traingle
@@ -163,21 +182,23 @@ def shadePhong(verts_p,
     # nodes-edges dict 
     nodes_on_edge = {0: [0,1],
                      1: [0,2],
-                     3: [1,2]}
+                     2: [1,2]}
     
     # Get a buffer for the normals on active nodes
-    active_normals_on_edge = np.zeros((3,3))
+    active_normals_on_edge = []
     
     # Create Phong Illumination Objects for every Light Source :=: PointLightObject
-    phongLightingSource = [None]*len(lights)
-    for i,_ in enumerate(lights):
-        phongLightingSource[i] = PhongIlluminationModel(mat.ka,mat.kd,mat.ks,mat.n_phong,lights[i].l_pos,lights[i].l_int)
-    
+    lights_int = lights.l_int
+    lights_pos = lights.l_pos
+    phongLightingSource = []
+    for i,_ in enumerate(lights_pos):
+        phongLightingSource.append(PhongIlluminationModel(mat.ka,mat.kd,mat.ks,mat.n_phong,lights_pos[i],lights_int[i]))
+    phongLightingSource = np.array(phongLightingSource)
     ''' Scanline for estimating normals'''
     for y in range (y_min,y_max):
         # every loop := every scanline update the active elements
-        active_edges, active_points, updated_nodes = update_active_edges(y,vertices_of_edge,y_limits_of_edge,active_edges,active_points)
-        updated_nodes =update_active_nodes(sigmas_of_edges,active_points,updated_nodes)
+        active_edges, active_points, updated_nodes = update_active_edges(y,vertices_of_edge,y_limits_of_edge,sigmas_of_edges,active_edges,active_points)
+        updated_nodes = update_active_nodes(sigmas_of_edges,active_edges,active_points,updated_nodes)
         # update the canvas := img variable
         img, active_points_color = color_interp(y,nodes_on_edge,x_limits_of_edge,y_limits_of_edge,sigmas_of_edges,active_edges,active_points,verts_c,img)
         
@@ -188,28 +209,28 @@ def shadePhong(verts_p,
             y_edges = np.array(y_limits_of_edge[i])
             # select edge-nodes combination 
             pairs_of_nodes = nodes_on_edge[i]
+            
             # n1,n2 = normal vectors on edge - To be used in interpolateVector in order 
             # to seek the normal on acvie node
-            n1,n2  = verts_n(pairs_of_nodes[0],pairs_of_nodes[1])
+            n1,n2  = verts_n[pairs_of_nodes[0]],verts_n[pairs_of_nodes[1]]
             # select the normals for the corespnding pairs_of_nodes 
             
             # Case1 - Horizontal Edge := use x_bounds to interpolate no problem
             if sigmas_of_edges[i] == 0:
-                active_normals_on_edge = InterpolateVector(int(np.around(x_edges[0])),int(np.around(x_edges[1])),n1,n2,active_points[i,0],dim=2)
+                l = InterpolateVector(int(np.around(x_edges[0])),int(np.around(x_edges[1])),n1,n2,active_points[i,0],dim=2)
                 # normalize estimated normals
-                active_normals_on_edge[i] = active_normals_on_edge[i] / np.linalg.norm(active_normals_on_edge[i])
+                active_normals_on_edge.append(l / np.linalg.norm(l))
             # Case2 - Vertical Edge  := use y bound to interpolate
             elif np.abs(sigmas_of_edges[i] == float('inf')):
-                active_normals_on_edge[i] = InterpolateVector(int(np.around(y_edges[0])),int(np.around(x_edges[1])),n1,n2,y,dim=2)
-                active_normals_on_edge[i] = active_normals_on_edge[i] / np.linalg.norm(active_normals_on_edge[i])
+                t = InterpolateVector(int(np.around(y_edges[0])),int(np.around(x_edges[1])),n1,n2,y,dim=2)
+                t = t / np.linalg.norm(t)
+                active_normals_on_edge.append(t)
             # Case3 - Edge alpha in R* := we use the scanline conventio so ys again
             else:
-                active_normals_on_edge[i] = InterpolateVector(int(np.around(y_edges[0])),int(np.around(y_edges[1])),n1,n2,y,dim=2)
-                active_normals_on_edge[i] = active_normals_on_edge[i] / np.linalg.norm(active_normals_on_edge[i])
-                
-                
-                
-                
+                k = InterpolateVector(int(np.around(y_edges[0])),int(np.around(y_edges[1])),n1,n2,y,dim=2)
+                active_normals_on_edge.append(k / np.linalg.norm(k))
+
+            active_normals_on_edge= np.array(active_normals_on_edge)
             '''Scanline for Color Vectors'''
             x_left_bound , index_l = np.min(active_points[active_edges, 0]), np.argmin(active_points[active_edges, 0])
             x_right_bound, index_r = np.max(active_points[active_edges, 0]), np.argmax(active_points[active_edges, 0])
@@ -226,9 +247,16 @@ def shadePhong(verts_p,
                         normal = InterpolateVector(int(np.around(x_left_bound)),int(np.around(x_right_bound)),n1,n2,x,dim=2)
                         normal = normal / np.linalg.norm(normal)
                         updated_color = InterpolateVector(int(np.around(x_left_bound)), int(np.around(x_right_bound)),c1,c2,x,dim=2)
-                        for i,_ in enumerate(lights):
-                            img[x,y] += phongLightingSource[i].light(bcoords,normal,updated_color,cam_pos,light_amb)
-                            
+                        for i,_ in enumerate(phongLightingSource):
+                            if LightingParam == 0:
+                                img[x,y] += phongLightingSource[i].ambient_light(mat.ka,light_amb)
+                            elif LightingParam == 1:
+                                img[x,y] = phongLightingSource[i].diffuse_lights(bcoords,normal,updated_color,mat.kd,lights_pos[i],lights_int[i])
+                            elif LightingParam == 2:
+                                img[x,y] = phongLightingSource[i].specular_light(bcoords,normal,updated_color,cam_pos,mat.ks,mat.n_phong,lights_pos[i],lights_int[i])
+                            else:
+                                img[x,y] = phongLightingSource[i].light(bcoords,normal,updated_color,cam_pos,light_amb)
+            active_normals_on_edge = active_normals_on_edge.tolist()                
             
     return img
             
@@ -236,7 +264,7 @@ def shadePhong(verts_p,
             
 
 
-def shadeGouraughRev(verts_p,
+def shadeGouraudRev(verts_p,
                      verts_n,
                      verts_c,
                      bcoords,
@@ -244,7 +272,8 @@ def shadeGouraughRev(verts_p,
                      mat,
                      lights,
                      light_amb,
-                     img):
+                     img,
+                     LightingParam):
     vertices_of_edge, x_limits_of_edge, y_limits_of_edge, sigmas_of_edges = compute_edge_limits(verts_p)
     x_min, x_max = int(np.amin(x_limits_of_edge)), int(np.amax(x_limits_of_edge))
     y_min, y_max = int(np.amin(y_limits_of_edge)), int(np.amax(y_limits_of_edge))
@@ -252,30 +281,13 @@ def shadeGouraughRev(verts_p,
     # Active Elements of the triangle
     # Active Points: Points where we estimate the colro
     # Active Edges: Edges of the trinagles that are used for interpolating the color 
-    
-    # TODO fix this 
-    n1,n2,n3 = verts_n(0),verts_n(1),verts_n(2)
-    
     active_edges = np.array([False,False,False])
     active_points = np.zeros((3,2))
      # nodes-edges dict 
     nodes_on_edge = {0: [0,1],
                      1: [0,2],
-                     3: [1,2]}
-    
-    
-    c1_updated = verts_c[0]
-    c2_updated = verts_c[1]
-    c3_updated = verts_c[2]
-    # Create Phong Illumination Objects for every Light Source :=: PointLightObject
-    phongLightingSource = [None]*len(lights)
-    for i,_ in enumerate(lights):
-        phongLightingSource[i] = PhongIlluminationModel(mat.ka,mat.kd,mat.ks,mat.n_phong,lights[i].l_pos,lights[i].l_int)    
-        c1_updated += phongLightingSource[i].light(bcoords,n1,verts_c[0],cam_pos,light_amb)
-        c2_updated += phongLightingSource[i].light(bcoords,n2,verts_c[1],cam_pos,light_amb)
-        c3_updated += phongLightingSource[i].light(bcoords,n3,verts_c[2],cam_pos,light_amb)   
-    
-    verts_c_updated = np.array([c1_updated,c2_updated,c3_updated])    
+                     2: [1,2]}
+
     """
         Scanline For Color Interpolation
     """
@@ -284,8 +296,41 @@ def shadeGouraughRev(verts_p,
                 
     for y in range (y_min,y_max):
         # every loop := every scanline update the active elements
-        active_edges, active_points, updated_nodes = update_active_edges(y,vertices_of_edge,y_limits_of_edge,active_edges,active_points)
-        updated_nodes =update_active_nodes(sigmas_of_edges,active_points,updated_nodes)
+        active_edges, active_points, updated_nodes = update_active_edges(y,vertices_of_edge,y_limits_of_edge,sigmas_of_edges,active_edges,active_points)
+        updated_nodes =update_active_nodes(sigmas_of_edges,active_edges,active_points,updated_nodes)
+        for i,v in enumerate(active_points):
+            pairs_of_nodes = nodes_on_edge[i]
+            n1,n2  = verts_n[pairs_of_nodes[0]],verts_n[pairs_of_nodes[1]]
+        c1_updated = verts_c[0]
+        c2_updated = verts_c[1]
+        c3_updated = verts_c[2]
+        # Create Phong Illumination Objects for every Light Source :=: PointLightObject
+        phongLightingSource = []
+        lights_int = lights.l_int
+        lights_pos = lights.l_pos
+        for i,_ in enumerate(lights.l_pos):
+            phongLightingSource.append(PhongIlluminationModel(mat.ka,mat.kd,mat.ks,mat.n_phong,lights_pos[i],lights_int[i]))
+        phongLightingSource = np.array(phongLightingSource)
+        for i,_ in enumerate(phongLightingSource):
+            if LightingParam == 0:
+                c1_updated += phongLightingSource[i].ambient_light(mat.ka,light_amb)
+                c2_updated += phongLightingSource[i].ambient_light(mat.ka,light_amb)
+                c3_updated += phongLightingSource[i].ambient_light(mat.ka,light_amb)
+            elif LightingParam == 1:
+                c1_updated = phongLightingSource[i].diffuse_lights(bcoords,n1,verts_c[0],mat.kd,lights_pos[i],lights_int[i])
+                c2_updated = phongLightingSource[i].diffuse_lights(bcoords,n2,verts_c[1],mat.kd,lights_pos[i],lights_int[i])
+                c3_updated = phongLightingSource[i].diffuse_lights(bcoords,n2,verts_c[2],mat.kd,lights_pos[i],lights_int[i]) 
+            elif LightingParam == 2:
+                c1_updated = phongLightingSource[i].specular_light(bcoords,n1,verts_c[0],cam_pos,mat.ks,mat.n_phong,lights_pos[i],lights_int[i])
+                c2_updated = phongLightingSource[i].specular_light(bcoords,n2,verts_c[1],cam_pos,mat.ks,mat.n_phong,lights_pos[i],lights_int[i])
+                c3_updated = phongLightingSource[i].specular_light(bcoords,n2,verts_c[2],cam_pos,mat.ks,mat.n_phong,lights_pos[i],lights_int[i])   
+            else:
+                c1_updated = phongLightingSource[i].light(bcoords,n1,verts_c[0],cam_pos,light_amb)
+                c2_updated = phongLightingSource[i].light(bcoords,n2,verts_c[1],cam_pos,light_amb)
+                c3_updated = phongLightingSource[i].light(bcoords,n2,verts_c[2],cam_pos,light_amb)   
+            
+
+        verts_c_updated = np.array([c1_updated,c2_updated,c3_updated])      
         # update the canvas := img variable
         img, active_points_color = color_interp(y,nodes_on_edge,x_limits_of_edge,y_limits_of_edge,sigmas_of_edges,active_edges,active_points,verts_c_updated,img)
         '''Scanline for Color Vectors'''
@@ -297,7 +342,7 @@ def shadeGouraughRev(verts_p,
         for x in range(x_min, x_max + 1):
             cross_counter += np.count_nonzero(x == np.around(active_points[active_edges, 0]))
             if cross_counter % 2 != 0 and int(np.around(x_left_bound)) != int(np.around(x_right_bound)):            
-                img[x, y] = InterpolateVector(int(np.around(x_left_bound)), int(np.around(x_right_bound)), x, c1, c2,dim=2)
+                img[x, y] += InterpolateVector(int(np.around(x_left_bound)), int(np.around(x_right_bound)), x, c1, c2,dim=2)
     return img
             
         

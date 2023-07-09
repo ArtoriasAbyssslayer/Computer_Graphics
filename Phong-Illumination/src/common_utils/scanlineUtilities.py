@@ -160,14 +160,14 @@ def color_interp(y, node_combination_on_edge, x_limits_of_edge, y_limits_of_edge
             if sigma_of_edge[i] == 0:
                 active_nodes_color[i] = InterpolateVector(x_edge[0], x_edge[1], active_nodes[i, 0], c1, c2,dim=2)
                 for x in range(x_edge[0], x_edge[1]):
-                    img[int(np.around(x)), int(np.around(y))] = InterpolateVector(x_edge[0], x_edge[1], x, c1, c2,dim=2)
+                    img[int(np.around(x)), int(np.around(y))] += InterpolateVector(x_edge[0], x_edge[1], x, c1, c2,dim=2)
             elif np.abs(sigma_of_edge[i]) == float('inf'):
                 active_nodes_color[i] = InterpolateVector(y_edge[0], y_edge[1], y, c1, c2,dim=2)
-                img[int(active_nodes[i, 0]), int(np.around(y))] = active_nodes_color[i]
+                img[int(active_nodes[i, 0]), int(np.around(y))] += active_nodes_color[i]
             elif np.isnan(active_nodes[i,0]):
                 continue
             else:
                 active_nodes_color[i] = InterpolateVector(y_edge[0], y_edge[1], y, c1, c2,dim=2)
-                img[int(active_nodes[i, 0]), int(np.around(y))] = active_nodes_color[i]
+                img[int(active_nodes[i, 0]), int(np.around(y))] += active_nodes_color[i]
 
     return img, active_nodes_color

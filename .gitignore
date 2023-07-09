@@ -1,0 +1,15 @@
+Phong-Illumination/src/common_utils/shading.py
+Phong-Illumination/src/common_utils/__pycache__/calculate_Barycentrics.cpython-311.pyc
+Phong-Illumination/src/common_utils/__pycache__/calculate_normals.cpython-311.pyc
+Phong-Illumination/src/common_utils/__pycache__/interpolate_color.cpython-311.pyc
+Phong-Illumination/src/common_utils/__pycache__/lighting.cpython-311.pyc
+Phong-Illumination/src/common_utils/__pycache__/load_vertices.cpython-311.pyc
+Phong-Illumination/src/common_utils/__pycache__/phongMaterial.cpython-311.pyc
+Phong-Illumination/src/common_utils/__pycache__/pointLight.cpython-311.pyc
+Phong-Illumination/src/common_utils/__pycache__/projections.cpython-311.pyc
+Phong-Illumination/src/common_utils/__pycache__/rasterize.cpython-311.pyc
+Phong-Illumination/src/common_utils/__pycache__/render.cpython-311.pyc
+Phong-Illumination/src/common_utils/__pycache__/scanlineUtilities.cpython-311.pyc
+Phong-Illumination/src/common_utils/__pycache__/shading.cpython-311.pyc
+Phong-Illumination/src/common_utils/__pycache__/transformations.cpython-311.pyc
+Phong-Illumination/src/common_utils/__pycache__/calculate_Barycentrics.cpython-311.pyc

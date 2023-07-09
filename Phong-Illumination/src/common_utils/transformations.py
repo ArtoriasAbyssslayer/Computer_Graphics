@@ -45,9 +45,10 @@ def changeCoordinateSystem(cp,R,c0):
     """
     cp = cp.reshape(-1,3)
     cp_augmented_matrix = np.concatenate((cp.T, np.ones((1, cp.shape[0]))), axis=0)
-    c0.reshape(3,1)
-    homognus_transform = np.concatenate((np.linalg.inv(R).T.squeeze(),  c0),axis=1)
-    dp = np.matmul(homognus_transform,cp_augmented_matrix).T
+    c0 = c0.reshape(3,1)
+    translation = -R.T@c0
+    homogenus_transform = np.concatenate([R.T,translation],1)
+    dp = np.matmul(homogenus_transform,cp_augmented_matrix).T
     return dp[:, 0:3] # keep only the first 3 rows, the last row is the homogenous coordinate which is always 1
 
 

@@ -1,6 +1,6 @@
 
 # Internal Imports
-from src.common_utils.shading import shadeFlat,shadeGouraud,shadePhong,shadeGouraughRev
+from src.common_utils.shading import shadeFlat,shadeGouraud,shadePhong,shadeGouraudRev
 from src.common_utils.rasterize import rasterize 
 from src.common_utils.projections import cameraLookingAt
 from src.common_utils.calculate_normals import calculate_normals as calculateNormals
@@ -64,17 +64,18 @@ def render(verts2d,
     # plt.pause(1)
     # plt.close()
     return updated_canvas
-def render_with_illumination(verts2d,
+def render_with_illumination(verts2d,verts3d,
            faces,
            vcolors,
            depth,
            m, n,
            verts_normals,
-           bcoords,
            cam_pos,
            phongMaterial,
            pointLights,
            light_amb,
+           canvas,
+           LightingParam,
            shade_t):
     """Iterates over every triangle, from the farthest to the nearest, and calls the coloring method for each one separately.
 
@@ -101,30 +102,29 @@ def render_with_illumination(verts2d,
     -------
     canvas : MxNx3 image with colors
     """
-    assert shade_t in ('flat', 'gouraud') and m >= 0 and n >= 0
-    canvas = np.ones((m, n, 3))
+    assert shade_t in ('flat', 'gouraud','gouraudRev','phong') and m >= 0 and n >= 0
     # depth of every triangle. depth[i] = depth of triangle i
-    depth_tr = np.array(np.mean(depth[faces], axis=1))
+    depth_tr = np.array(np.mean(depth[faces], axis=0))
     # order from the farthest triangle to the closest, depth-wise
     triangles_in_order = list(np.flip(np.argsort(depth_tr)))
-
-    for tri in tqdm(triangles_in_order):
-        triangle_verts = faces[tri]
-        triangle_projected_verts = np.array(verts2d[triangle_verts])  # x,y of the 3 vertices of triangle t
-        triangle_colors = np.array(vcolors[triangle_verts])  # color of the 3 vertices of triangle t
+    for tri in tqdm(triangles_in_order ,desc="Processing triangles",total=len(triangles_in_order)):
+        triangle_verts = faces[:,tri]
+        triangle_projected_verts = np.array(verts2d[triangle_verts]) # x,y of the 3 vertices of triangle t
+        tri_bcoords = np.mean(verts3d[:,triangle_verts], axis=1)
+        triangle_colors = vcolors[:,triangle_verts]
         if shade_t == 'flat':
-            updated_canvas = shadeFlat(triangle_projected_verts, triangle_colors, canvas)
+            updated_canvas = shadeFlat(triangle_projected_verts,verts_normals,triangle_colors,tri_bcoords,cam_pos,phongMaterial,pointLights,light_amb,canvas,LightingParam)
         elif shade_t == 'gouraud':
-            updated_canvas = shadeGouraud(triangle_projected_verts, triangle_colors, canvas)
-        elif shade_t == 'gouraughRev':
-            updated_canvas = shadeGouraughRev(triangle_projected_verts,verts_normals,triangle_colors,bcoords,cam_pos,phongMaterial,pointLights,light_amb,canvas)
+            updated_canvas = shadeGouraud(triangle_projected_verts,verts_normals,triangle_colors,tri_bcoords,cam_pos,phongMaterial,pointLights,light_amb,canvas,LightingParam)
+        elif shade_t == 'gouraudRev':
+            updated_canvas = shadeGouraudRev(triangle_projected_verts,verts_normals,triangle_colors,tri_bcoords,cam_pos,phongMaterial,pointLights,light_amb,canvas,LightingParam)
         elif shade_t == 'phong':
-            updated_canvas == shadePhong(triangle_projected_verts,verts_normals,triangle_colors,bcoords,cam_pos,phongMaterial,pointLights,light_amb,canvas)
+            updated_canvas = shadePhong(triangle_projected_verts,verts_normals,triangle_colors,tri_bcoords,cam_pos,phongMaterial,pointLights,light_amb,canvas,LightingParam)
             
 
     normalized_image = (updated_canvas * 255).astype(np.uint8)
     cv.imshow('rendered image', normalized_image)
-    cv.waitKey(1650)
+    cv.waitKey(3000)
     cv.destroyAllWindows()
     
     # fig, ax = plt.subplots()    
@@ -184,7 +184,7 @@ def renderImageToFile(canvas, filename, save=False):
     Phong Shading,Illumination
 """
 def render_object(shader,focal,eye,lookat,up,bg_color,
-                  M,N,H,W,verts,vcolors,faces,mat,lights,light_amb):
+                  M,N,H,W,verts,vcolors,faces,mat,lights,light_amb,LightingParam):
     """
         Arguments:
         shader: binary value indicating the shading type (0: gouraud, 1: phong)
@@ -203,21 +203,17 @@ def render_object(shader,focal,eye,lookat,up,bg_color,
         light_amb: Ambient light intensity
         
     """
-    img = np.zeros((M,N,3))
-    img = img + bg_color
     
+    img = bg_color
     normals = calculateNormals(verts,faces)
-    # Calculate bcoords  
-    bcoords = calculateBarycentrics(verts,faces)
-    
-    Points,depths = cameraLookingAt(focal,eye,lookat,up,verts)
-    rasterized_verts2d = rasterize(Points,Rows=M,Columns=N,H=H,W=W)
+    Points,depths = cameraLookingAt(focal,eye,lookat,up,verts.T)
+    rasterized_verts2d = rasterize(-Points,Rows=M,Columns=N,H=H,W=W)
     # case 1: gouraud shading Revised
     if shader == 0 :
         # render_with_illumination is the loop function on ordered depths which shades every triangle
-        img = render_with_illumination(rasterized_verts2d,faces,vcolors,depths,M,N,normals,bcoords,eye,mat,lights,light_amb,shade_t='gouraughRev')
+        img = render_with_illumination(rasterized_verts2d,verts,faces,vcolors,depths,M,N,normals,eye,mat,lights,light_amb,img,LightingParam,shade_t='gouraudRev')
     # case 2: phong shading    
     elif shader == 1 :
-        img = render_with_illumination(rasterized_verts2d,faces,vcolors,depths,M,N,normals,bcoords,eye,mat,lights,light_amb,shade_t='phong')
+        img = render_with_illumination(rasterized_verts2d,verts,faces,vcolors,depths,M,N,normals,eye,mat,lights,light_amb,img,LightingParam,shade_t='phong')
     
-    
+    return img
