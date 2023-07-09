@@ -249,13 +249,15 @@ def shadePhong(verts_p,
                         updated_color = InterpolateVector(int(np.around(x_left_bound)), int(np.around(x_right_bound)),c1,c2,x,dim=2)
                         for i,_ in enumerate(phongLightingSource):
                             if LightingParam == 0:
-                                img[x,y] += phongLightingSource[i].ambient_light(mat.ka,light_amb)
+                                img[x,y] += phongLightingSource[i].ambient_light(mat.ka,light_amb)/np.linalg.norm(phongLightingSource[i].ambient_light(mat.ka,light_amb))
                             elif LightingParam == 1:
-                                img[x,y] = phongLightingSource[i].diffuse_lights(bcoords,normal,updated_color,mat.kd,lights_pos[i],lights_int[i])
+                                img[x,y] += phongLightingSource[i].diffuse_lights(bcoords,normal,updated_color,mat.kd,lights_pos[i],lights_int[i])/np.linalg.norm( phongLightingSource[i].diffuse_lights(bcoords,normal,updated_color,mat.kd,lights_pos[i],lights_int[i]))
                             elif LightingParam == 2:
-                                img[x,y] = phongLightingSource[i].specular_light(bcoords,normal,updated_color,cam_pos,mat.ks,mat.n_phong,lights_pos[i],lights_int[i])
+                                img[x,y] += phongLightingSource[i].specular_light(bcoords,normal,updated_color,cam_pos,mat.ks,mat.n_phong,lights_pos[i],lights_int[i])/np.linalg.norm(phongLightingSource[i].light(bcoords,normal,updated_color,cam_pos,light_amb))
                             else:
-                                img[x,y] = phongLightingSource[i].light(bcoords,normal,updated_color,cam_pos,light_amb)
+                                img[x,y] += phongLightingSource[i].light(bcoords,normal,updated_color,cam_pos,light_amb)/np.linalg.norm(phongLightingSource[i].light(bcoords,normal,updated_color,cam_pos,light_amb))
+                                
+            
             active_normals_on_edge = active_normals_on_edge.tolist()                
             
     return img
@@ -301,6 +303,8 @@ def shadeGouraudRev(verts_p,
         for i,v in enumerate(active_points):
             pairs_of_nodes = nodes_on_edge[i]
             n1,n2  = verts_n[pairs_of_nodes[0]],verts_n[pairs_of_nodes[1]]
+            n3 = (n1+n2)/2
+            
         c1_updated = verts_c[0]
         c2_updated = verts_c[1]
         c3_updated = verts_c[2]
@@ -311,23 +315,26 @@ def shadeGouraudRev(verts_p,
         for i,_ in enumerate(lights.l_pos):
             phongLightingSource.append(PhongIlluminationModel(mat.ka,mat.kd,mat.ks,mat.n_phong,lights_pos[i],lights_int[i]))
         phongLightingSource = np.array(phongLightingSource)
+
+        # Calculated the updated vector colors due to light sources light emmission. Normalize the light in order the update in color to be between 0 and 1 in every channel
         for i,_ in enumerate(phongLightingSource):
             if LightingParam == 0:
-                c1_updated += phongLightingSource[i].ambient_light(mat.ka,light_amb)
-                c2_updated += phongLightingSource[i].ambient_light(mat.ka,light_amb)
-                c3_updated += phongLightingSource[i].ambient_light(mat.ka,light_amb)
+
+                c1_updated += phongLightingSource[i].ambient_light(mat.ka,light_amb)/np.linalg.norm(phongLightingSource[i].ambient_light(mat.ka,light_amb))
+                c2_updated += phongLightingSource[i].ambient_light(mat.ka,light_amb)/np.linalg.norm(phongLightingSource[i].ambient_light(mat.ka,light_amb))
+                c3_updated += phongLightingSource[i].ambient_light(mat.ka,light_amb)/np.linalg.norm(phongLightingSource[i].ambient_light(mat.ka,light_amb))
             elif LightingParam == 1:
-                c1_updated = phongLightingSource[i].diffuse_lights(bcoords,n1,verts_c[0],mat.kd,lights_pos[i],lights_int[i])
-                c2_updated = phongLightingSource[i].diffuse_lights(bcoords,n2,verts_c[1],mat.kd,lights_pos[i],lights_int[i])
-                c3_updated = phongLightingSource[i].diffuse_lights(bcoords,n2,verts_c[2],mat.kd,lights_pos[i],lights_int[i]) 
+                c1_updated += phongLightingSource[i].diffuse_lights(bcoords,n1,verts_c[0],mat.kd,lights_pos[i],lights_int[i])/np.linalg.norm( phongLightingSource[i].diffuse_lights(bcoords,n1,verts_c[0],mat.kd,lights_pos[i],lights_int[i]))
+                c2_updated += phongLightingSource[i].diffuse_lights(bcoords,n2,verts_c[1],mat.kd,lights_pos[i],lights_int[i])/np.linalg.norm( phongLightingSource[i].diffuse_lights(bcoords,n2,verts_c[1],mat.kd,lights_pos[i],lights_int[i]))
+                c3_updated += phongLightingSource[i].diffuse_lights(bcoords,n3,verts_c[2],mat.kd,lights_pos[i],lights_int[i])/np.linalg.norm( phongLightingSource[i].diffuse_lights(bcoords,n3,verts_c[2],mat.kd,lights_pos[i],lights_int[i]))
             elif LightingParam == 2:
-                c1_updated = phongLightingSource[i].specular_light(bcoords,n1,verts_c[0],cam_pos,mat.ks,mat.n_phong,lights_pos[i],lights_int[i])
-                c2_updated = phongLightingSource[i].specular_light(bcoords,n2,verts_c[1],cam_pos,mat.ks,mat.n_phong,lights_pos[i],lights_int[i])
-                c3_updated = phongLightingSource[i].specular_light(bcoords,n2,verts_c[2],cam_pos,mat.ks,mat.n_phong,lights_pos[i],lights_int[i])   
+                c1_updated += phongLightingSource[i].specular_light(bcoords,n1,verts_c[0],cam_pos,mat.ks,mat.n_phong,lights_pos[i],lights_int[i])/np.linalg.norm(phongLightingSource[i].specular_light(bcoords,n1,verts_c[0],cam_pos,mat.ks,mat.n_phong,lights_pos[i],lights_int[i]))
+                c2_updated += phongLightingSource[i].specular_light(bcoords,n2,verts_c[1],cam_pos,mat.ks,mat.n_phong,lights_pos[i],lights_int[i])/np.linalg.norm(phongLightingSource[i].specular_light(bcoords,n2,verts_c[1],cam_pos,mat.ks,mat.n_phong,lights_pos[i],lights_int[i]))
+                c3_updated += phongLightingSource[i].specular_light(bcoords,n3,verts_c[2],cam_pos,mat.ks,mat.n_phong,lights_pos[i],lights_int[i])   /np.linalg.norm(phongLightingSource[i].specular_light(bcoords,n3,verts_c[2],cam_pos,mat.ks,mat.n_phong,lights_pos[i],lights_int[i]))
             else:
-                c1_updated = phongLightingSource[i].light(bcoords,n1,verts_c[0],cam_pos,light_amb)
-                c2_updated = phongLightingSource[i].light(bcoords,n2,verts_c[1],cam_pos,light_amb)
-                c3_updated = phongLightingSource[i].light(bcoords,n2,verts_c[2],cam_pos,light_amb)   
+                c1_updated += phongLightingSource[i].light(bcoords,n1,verts_c[0],cam_pos,light_amb)/np.linalg.norm(phongLightingSource[i].light(bcoords,n1,verts_c[0],cam_pos,light_amb))
+                c2_updated += phongLightingSource[i].light(bcoords,n2,verts_c[1],cam_pos,light_amb)/np.linalg.norm(phongLightingSource[i].light(bcoords,n2,verts_c[1],cam_pos,light_amb))
+                c3_updated += phongLightingSource[i].light(bcoords,n3,verts_c[2],cam_pos,light_amb)/np.linalg.norm(phongLightingSource[i].light(bcoords,n3,verts_c[2],cam_pos,light_amb))   
             
 
         verts_c_updated = np.array([c1_updated,c2_updated,c3_updated])      
@@ -342,7 +349,7 @@ def shadeGouraudRev(verts_p,
         for x in range(x_min, x_max + 1):
             cross_counter += np.count_nonzero(x == np.around(active_points[active_edges, 0]))
             if cross_counter % 2 != 0 and int(np.around(x_left_bound)) != int(np.around(x_right_bound)):            
-                img[x, y] += InterpolateVector(int(np.around(x_left_bound)), int(np.around(x_right_bound)), x, c1, c2,dim=2)
+                img[x, y] = InterpolateVector(int(np.around(x_left_bound)), int(np.around(x_right_bound)), x, c1, c2,dim=2)
     return img
             
         

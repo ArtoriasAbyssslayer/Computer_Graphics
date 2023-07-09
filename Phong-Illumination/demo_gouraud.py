@@ -36,7 +36,7 @@ def main(*args):
             toc = time.time()
             min = int((toc - tic)/60)
             print(f"Shading Diffuse Only Lighting finished in {min} minutes {(toc - tic)%60:0.0f} seconds")
-        elif param == 0:
+        elif param == 2:
             tic = time.time()
             Y = render_object(shader,focal,eye,lookat,up,bg_color,M,N,H,W,verts,vcolors,face_indices,mat,lights,light_amb,param)
             renderImageToFile(Y,'Gouraud_Specular',save=True)

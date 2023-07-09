@@ -24,16 +24,16 @@ def initial_active_elements(active_edges, active_nodes, vertices_of_edge, y_limi
 
    
     for i, y_limit in enumerate(y_limits_of_edge):
-        if y_limit[0].any() == y_min:  # y-scan line meets new edge from the bottom
-            if sigma_of_edge[i].any() == 0:  # lower horizontal line
+        if y_limit[0] == y_min:  # y-scan line meets new edge from the bottom
+            if sigma_of_edge[i] == 0:  # lower horizontal line
                 continue
-            if np.isnan(sigma_of_edge[i].any()):  # it's an invisible line
+            if np.isnan(sigma_of_edge[i]):  # it's an invisible line
                 is_invisible = True
                 continue
             active_edges[i] = True  # in other cases, it's an active line
             pos= np.argmin(vertices_of_edge[i, :, 1])
-            active_nodes[i,0] = vertices_of_edge[i, pos, 0].all()
-            active_nodes[i,1] = y_limits_of_edge[i, 0].all()
+            active_nodes[i,0] = vertices_of_edge[i, pos, 0]
+            active_nodes[i,1] = y_limits_of_edge[i, 0]
             
     return active_edges, active_nodes, is_invisible
 
@@ -116,7 +116,7 @@ def update_active_nodes(sigma_of_edge, active_edges, active_nodes, updated_nodes
 
     Returns
     -------
-    active_nodes : the updated active vertices
+    active_nodes : the updated active vertices x_updated += 1/m , y_updated += 1
     """
     for i, sigma in enumerate(sigma_of_edge):
         if active_edges[i] and sigma != 0 and i not in updated_nodes:
@@ -160,14 +160,14 @@ def color_interp(y, node_combination_on_edge, x_limits_of_edge, y_limits_of_edge
             if sigma_of_edge[i] == 0:
                 active_nodes_color[i] = InterpolateVector(x_edge[0], x_edge[1], active_nodes[i, 0], c1, c2,dim=2)
                 for x in range(x_edge[0], x_edge[1]):
-                    img[int(np.around(x)), int(np.around(y))] += InterpolateVector(x_edge[0], x_edge[1], x, c1, c2,dim=2)
+                    img[int(np.around(x)), int(np.around(y))] = InterpolateVector(x_edge[0], x_edge[1], x, c1, c2,dim=2)
             elif np.abs(sigma_of_edge[i]) == float('inf'):
                 active_nodes_color[i] = InterpolateVector(y_edge[0], y_edge[1], y, c1, c2,dim=2)
-                img[int(active_nodes[i, 0]), int(np.around(y))] += active_nodes_color[i]
+                img[int(active_nodes[i, 0]), int(np.around(y))] = active_nodes_color[i]
             elif np.isnan(active_nodes[i,0]):
                 continue
             else:
                 active_nodes_color[i] = InterpolateVector(y_edge[0], y_edge[1], y, c1, c2,dim=2)
-                img[int(active_nodes[i, 0]), int(np.around(y))] += active_nodes_color[i]
+                img[int(active_nodes[i, 0]), int(np.around(y))] = active_nodes_color[i]
 
     return img, active_nodes_color
